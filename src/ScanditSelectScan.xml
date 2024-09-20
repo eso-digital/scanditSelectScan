@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="acc.scanditselectscan.ScanditSelectScan" pluginWidget="true" needsEntityContext="true" offlineCapable="true"
+        supportedPlatform="Native"
+        xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>Scandit Select Scan</name>
+    <description>My widget description</description>
+    <icon/>
+    <properties>
+        <propertyGroup caption="Licence">
+            <property key="scanditLicenceKey" type="string" required="false">
+                <caption>LicenceKey</caption>
+                <description>Scandit licence key</description>
+            </property>
+            <property key="compressionPercentage" type="attribute" required="false">
+                <caption>Compression Percentage</caption>
+                <description>Decimal between 0 to 1</description>
+                <attributeTypes>
+                        <attributeType name="Decimal"/>
+                    </attributeTypes>
+            </property>          
+        </propertyGroup>
+        <propertyGroup caption="General">
+            <propertyGroup caption="Data source">
+                <property key="barcode" type="attribute">
+                    <caption>Barcode</caption>
+                    <description>The attribute that will receive the scanned barcode value.</description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="image" type="attribute">
+                    <caption>ImageURI</caption>
+                    <description>The attribute that will receive the screenshot in URI Image.</description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="width" type="attribute">
+                    <caption>ImageWidth</caption>
+                    <description>The attribute that will receive the width of the screenshot.</description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+                <property key="height" type="attribute">
+                    <caption>ImageHeight</caption>
+                    <description>The attribute that will receive the height of the screenshot.</description>
+                    <attributeTypes>
+                        <attributeType name="String"/>
+                    </attributeTypes>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Events">
+                <property key="onDetect" type="action" required="false">
+                    <caption>On detect</caption>
+                    <description/>
+                </property>
+            </propertyGroup>
+            <propertyGroup caption="Common">
+                <systemProperty key="Name"/>
+            </propertyGroup>
+        </propertyGroup>
+    </properties>
+</widget>
