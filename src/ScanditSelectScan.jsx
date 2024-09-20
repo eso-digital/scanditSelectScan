@@ -1,5 +1,5 @@
 import React, { Component, createElement, createRef } from 'react';
-import { AppState, BackHandler, Image } from 'react-native';
+import { AppState, BackHandler, Image, SafeAreaView, TouchableWithoutFeedback, Text } from 'react-native';
 import {
   BarcodeSelection,
   BarcodeSelectionAimerSelection,
@@ -12,19 +12,21 @@ import ViewShot from 'react-native-view-shot';
 
 import { requestCameraPermissionsIfNeeded } from './camera-permission-handler';
 
-// Enter your Scandit License key here.
-// Your Scandit License key is available via your Scandit SDK web account.
-
 const executeAction = action => {
   if (action && action.canExecute && !action.isExecuting) {
     action.execute();
   }
 }
 
+const SelectionStrategy = {
+  auto: 'autoSelectionStrategy',
+  manual: 'manualSelectionStrategy'
+}
+
 export default class ScanditSelectScan extends Component {
   state = {
     result: null,
-    barcodes: []
+    selectionStrategy: SelectionStrategy.auto
   }
 
   constructor(props) {
@@ -62,6 +64,8 @@ export default class ScanditSelectScan extends Component {
       Symbology.Upu4State,
     ]);
 
+    this.barcodeSelectionSettings.codeDuplicateFilter = 10000;
+
     // Create new barcode selection mode with the settings from above.
     this.barcodeSelection = BarcodeSelection.forContext(this.dataCaptureContext, this.barcodeSelectionSettings);
     this.overlay = BarcodeSelectionBasicOverlay.withBarcodeSelectionForView(this.barcodeSelection, this.viewRef.current);
@@ -70,58 +74,39 @@ export default class ScanditSelectScan extends Component {
     this.barcodeSelection.addListener({
       didUpdateSelection: async (_, session, frame) => {
         
-        console.warn("A");
-        const barcode1 = session.newlySelectedBarcodes[0];
-        console.warn("B");
-        if (!barcode1) { return }
-        console.warn("C");
-        if (!this.state.barcodes.includes(barcode1.data)) {
-          this.setState(prevState => ({
-            barcodes: [...prevState.barcodes, barcode1.data]
-          }));
-        }
-        else { return }
-        console.warn("D");
+        const barcode = session.newlySelectedBarcodes[0];
+        
+        if (!barcode) { return }
+        
         this.viewRef.current?.removeOverlay(this.overlay);
-        console.warn("E");
-        ViewShot.captureRef(this.viewRef, {
-          format: "jpg",
-          quality: this.props.compressionPercentage.value,
-        })
-        .then(uri => {
-          console.warn("1");
-          this.viewRef.current.addOverlay(this.overlay);
-          console.warn("2");
-          Image.getSize(uri, (width, height) => {
-            console.warn("3");
-            console.warn('Image size:', width, height);
-            console.warn("4");
-            this.props.width.setValue(width.toString());
-            console.warn("5");
-            this.props.height.setValue(height.toString());
-            console.warn("6");
-            this.props.image.setValue(uri);
-            console.warn("7");
-          }, error => {
-            console.error("Failed to get image size:", error);
-          });
-        })
-        .catch(error => {
-          console.error("Failed to capture view:", error);
-        });
 
-        this.props.barcode.setValue(barcode1.data.toString());
-        console.warn('Widget finished: ' + barcode1.data);
-        executeAction(this.props.onDetect);
+        setTimeout(() => { 
+          ViewShot.captureRef(this.viewRef, {
+            format: "jpg",
+            quality: this.props.compressionPercentage.value,
+          })
+          .then(uri => {
+            this.viewRef.current.addOverlay(this.overlay);
+            Image.getSize(uri, (width, height) => {
+              this.props.width.setValue(width.toString());
+              this.props.height.setValue(height.toString());
+              this.props.image.setValue(uri);
+            }, error => {
+              console.error("Failed to get image size:", error);
+            });
+          })
+          .catch(error => {
+            console.error("Failed to capture view:", error);
+          });
+
+          this.props.barcode.setValue(barcode.data.toString());
+          console.warn('Widget finished: ' + barcode.data);
+          executeAction(this.props.onDetect);
+        }, 1)
       }
     });
 
-    // Add a barcode selection overlay to the data capture view to render the location of captured barcodes on top of
-    // the video preview. This is optional, but recommended for better visual feedback.
-
-    this.barcodeSelectionSettings.selectionType = BarcodeSelectionAimerSelection.aimerSelection;
-    this.barcodeSelectionSettings.selectionType.selectionStrategy.type = "autoSelectionStrategy";
-    this.barcodeSelection.applySettings(this.barcodeSelectionSettings);
+    this.setupSelectionType(this.state.selectionStrategy);
   }
 
   componentWillUnmount() {
@@ -155,6 +140,15 @@ export default class ScanditSelectScan extends Component {
   }
 
   componentDidUpdate(_, previousState) {
+    if (previousState.selectionStrategy != this.state.selectionStrategy) {
+      this.setupSelectionType(this.state.selectionStrategy);
+    }
+  }
+
+  setupSelectionType(selectionStrategy) {
+    this.barcodeSelectionSettings.selectionType = BarcodeSelectionAimerSelection.aimerSelection;
+    this.barcodeSelectionSettings.selectionType.selectionStrategy.type = selectionStrategy;
+    this.barcodeSelection.applySettings(this.barcodeSelectionSettings);
   }
 
   render() {
@@ -162,6 +156,15 @@ export default class ScanditSelectScan extends Component {
       <>
         <DataCaptureView style={{ flex: 1 }} context={this.dataCaptureContext} ref={this.viewRef}>
         </DataCaptureView>
+
+        <SafeAreaView style={{ width: '100%', backgroundColor: "black", flexDirection: "row", justifyContent: "space-around", alignItems: 'center' }}>
+          <TouchableWithoutFeedback onPress={() => this.setState({ selectionStrategy: SelectionStrategy.manual })}>
+            <Text style={{ padding: 15, color: this.state.selectionStrategy == SelectionStrategy.manual ? 'white' : 'grey' }}>Tap to Confirm</Text>
+          </TouchableWithoutFeedback>
+          <TouchableWithoutFeedback onPress={() => this.setState({ selectionStrategy: SelectionStrategy.auto })}>
+            <Text style={{ padding: 15, color: this.state.selectionStrategy == SelectionStrategy.auto ? 'white' : 'grey' }}>Auto Select</Text>
+          </TouchableWithoutFeedback>
+        </SafeAreaView>
       </>
     );
   };
