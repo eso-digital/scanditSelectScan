@@ -70,6 +70,11 @@ export default class ScanditSelectScan extends Component {
     this.barcodeSelection = BarcodeSelection.forContext(this.dataCaptureContext, this.barcodeSelectionSettings);
     this.overlay = BarcodeSelectionBasicOverlay.withBarcodeSelectionForView(this.barcodeSelection, this.viewRef.current);
 
+    this.overlay.viewfinder.frameColor = 'FF000000';
+    this.overlay.selectedBrush.stroke.color = '26D482B3';
+    this.overlay.selectedBrush.stroke.width = 5;
+    this.overlay.aimedBrush.fill.color = 'FFD48255';
+
     // Register a listener to get informed whenever a new barcode got recognized.
     this.barcodeSelection.addListener({
       didUpdateSelection: async (_, session, frame) => {
