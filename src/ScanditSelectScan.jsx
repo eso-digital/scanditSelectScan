@@ -70,10 +70,14 @@ export default class ScanditSelectScan extends Component {
     this.barcodeSelection = BarcodeSelection.forContext(this.dataCaptureContext, this.barcodeSelectionSettings);
     this.overlay = BarcodeSelectionBasicOverlay.withBarcodeSelectionForView(this.barcodeSelection, this.viewRef.current);
 
+    this.viewRef.current.removeOverlay(this.overlay);
+
     this.overlay.viewfinder.frameColor = 'FF000000';
     this.overlay.selectedBrush.stroke.color = '26D482B3';
     this.overlay.selectedBrush.stroke.width = 5;
     this.overlay.aimedBrush.fill.color = 'FFD48255';
+
+    this.viewRef.current.addOverlay(this.overlay);
 
     // Register a listener to get informed whenever a new barcode got recognized.
     this.barcodeSelection.addListener({
@@ -83,8 +87,10 @@ export default class ScanditSelectScan extends Component {
         
         if (!barcode) { return }
         
-        this.viewRef.current?.removeOverlay(this.overlay);
+        this.props.barcode.setValue(barcode.data.toString());
 
+        this.viewRef.current?.removeOverlay(this.overlay);
+        
         setTimeout(() => { 
           ViewShot.captureRef(this.viewRef, {
             format: "jpg",
@@ -96,6 +102,8 @@ export default class ScanditSelectScan extends Component {
               this.props.width.setValue(width.toString());
               this.props.height.setValue(height.toString());
               this.props.image.setValue(uri);
+              executeAction(this.props.onDetect);
+              console.warn('Widget finished: ' + barcode.data);
             }, error => {
               console.error("Failed to get image size:", error);
             });
@@ -103,10 +111,6 @@ export default class ScanditSelectScan extends Component {
           .catch(error => {
             console.error("Failed to capture view:", error);
           });
-
-          this.props.barcode.setValue(barcode.data.toString());
-          console.warn('Widget finished: ' + barcode.data);
-          executeAction(this.props.onDetect);
         }, 1)
       }
     });
