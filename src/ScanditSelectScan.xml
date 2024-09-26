@@ -8,7 +8,7 @@
     <icon/>
     <properties>
         <propertyGroup caption="Licence">
-            <property key="scanditLicenceKey" type="string" required="false">
+            <property key="scanditLicenceKey" type="string" required="true">
                 <caption>LicenceKey</caption>
                 <description>Scandit licence key</description>
             </property>

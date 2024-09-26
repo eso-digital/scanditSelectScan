@@ -9,6 +9,7 @@ import {
 } from 'scandit-react-native-datacapture-barcode';
 import { Camera, DataCaptureContext, DataCaptureView, FrameSourceState } from 'scandit-react-native-datacapture-core';
 import ViewShot from 'react-native-view-shot';
+import KeepAwake from 'react-native-keep-awake';
 
 import { requestCameraPermissionsIfNeeded } from './camera-permission-handler';
 
@@ -70,6 +71,15 @@ export default class ScanditSelectScan extends Component {
     this.barcodeSelection = BarcodeSelection.forContext(this.dataCaptureContext, this.barcodeSelectionSettings);
     this.overlay = BarcodeSelectionBasicOverlay.withBarcodeSelectionForView(this.barcodeSelection, this.viewRef.current);
 
+    this.viewRef.current.removeOverlay(this.overlay);
+
+    this.overlay.viewfinder.frameColor = 'FF000000';
+    this.overlay.selectedBrush.stroke.color = '26D482B3';
+    this.overlay.selectedBrush.stroke.width = 5;
+    this.overlay.aimedBrush.fill.color = 'FFD48255';
+
+    this.viewRef.current.addOverlay(this.overlay);
+
     // Register a listener to get informed whenever a new barcode got recognized.
     this.barcodeSelection.addListener({
       didUpdateSelection: async (_, session, frame) => {
@@ -78,8 +88,10 @@ export default class ScanditSelectScan extends Component {
         
         if (!barcode) { return }
         
-        this.viewRef.current?.removeOverlay(this.overlay);
+        this.props.barcode.setValue(barcode.data.toString());
 
+        this.viewRef.current?.removeOverlay(this.overlay);
+        
         setTimeout(() => { 
           ViewShot.captureRef(this.viewRef, {
             format: "jpg",
@@ -91,6 +103,8 @@ export default class ScanditSelectScan extends Component {
               this.props.width.setValue(width.toString());
               this.props.height.setValue(height.toString());
               this.props.image.setValue(uri);
+              executeAction(this.props.onDetect);
+              console.warn('Widget finished: ' + barcode.data);
             }, error => {
               console.error("Failed to get image size:", error);
             });
@@ -98,10 +112,6 @@ export default class ScanditSelectScan extends Component {
           .catch(error => {
             console.error("Failed to capture view:", error);
           });
-
-          this.props.barcode.setValue(barcode.data.toString());
-          console.warn('Widget finished: ' + barcode.data);
-          executeAction(this.props.onDetect);
         }, 1)
       }
     });
@@ -155,14 +165,15 @@ export default class ScanditSelectScan extends Component {
     return (
       <>
         <DataCaptureView style={{ flex: 1 }} context={this.dataCaptureContext} ref={this.viewRef}>
+          <KeepAwake />
         </DataCaptureView>
 
         <SafeAreaView style={{ width: '100%', backgroundColor: "black", flexDirection: "row", justifyContent: "space-around", alignItems: 'center' }}>
           <TouchableWithoutFeedback onPress={() => this.setState({ selectionStrategy: SelectionStrategy.manual })}>
-            <Text style={{ padding: 15, color: this.state.selectionStrategy == SelectionStrategy.manual ? 'white' : 'grey' }}>Tap to Confirm</Text>
+            <Text style={{ padding: 15, color: this.state.selectionStrategy == SelectionStrategy.manual ? 'white' : 'grey' }}>Tap to scan</Text>
           </TouchableWithoutFeedback>
           <TouchableWithoutFeedback onPress={() => this.setState({ selectionStrategy: SelectionStrategy.auto })}>
-            <Text style={{ padding: 15, color: this.state.selectionStrategy == SelectionStrategy.auto ? 'white' : 'grey' }}>Auto Select</Text>
+            <Text style={{ padding: 15, color: this.state.selectionStrategy == SelectionStrategy.auto ? 'white' : 'grey' }}>Aim to scan</Text>
           </TouchableWithoutFeedback>
         </SafeAreaView>
       </>
