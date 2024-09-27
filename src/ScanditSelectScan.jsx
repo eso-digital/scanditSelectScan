@@ -9,7 +9,7 @@ import {
 } from 'scandit-react-native-datacapture-barcode';
 import { Camera, DataCaptureContext, DataCaptureView, FrameSourceState } from 'scandit-react-native-datacapture-core';
 import ViewShot from 'react-native-view-shot';
-import KeepAwake from 'react-native-keep-awake';
+import { KeepAwake, captureScreen } from 'react-native-keep-awake';
 
 import { requestCameraPermissionsIfNeeded } from './camera-permission-handler';
 
@@ -92,31 +92,57 @@ export default class ScanditSelectScan extends Component {
 
         this.viewRef.current?.removeOverlay(this.overlay);
         
-        setTimeout(() => { 
-          ViewShot.captureRef(this.viewRef, {
-            format: "jpg",
-            quality: this.props.compressionPercentage.value,
-          })
-          .then(uri => {
-            this.viewRef.current.addOverlay(this.overlay);
-            Image.getSize(uri, (width, height) => {
-              this.props.width.setValue(width.toString());
-              this.props.height.setValue(height.toString());
-              this.props.image.setValue(uri);
-              executeAction(this.props.onDetect);
-              console.warn('Widget finished: ' + barcode.data);
-            }, error => {
-              console.error("Failed to get image size:", error);
-            });
-          })
-          .catch(error => {
-            console.error("Failed to capture view:", error);
-          });
-        }, 1)
+        if (Platform.OS === 'ios') {
+          this.captureIOS();
+        } else if (Platform.OS === 'android') {
+          this.captureAndroid();
+        }
       }
     });
 
     this.setupSelectionType(this.state.selectionStrategy);
+  }
+
+  captureIOS() {
+    captureScreen({
+      format: "jpg",
+      quality: this.props.compressionPercentage.value,
+    })
+    .then(uri => {
+      this.viewRef.current.addOverlay(this.overlay);
+      Image.getSize(uri, (width, height) => {
+        this.props.width.setValue(width.toString());
+        this.props.height.setValue(height.toString());
+        this.props.image.setValue(uri);
+        executeAction(this.props.onDetect);
+      }, error => {
+        console.error("Failed to get image size:", error);
+      });
+    })
+    .catch(error => {
+      console.error("Failed to capture view:", error);
+    });
+  }
+
+  captureAndroid() {
+    ViewShot.captureRef(this.viewRef, {
+      format: "jpg",
+      quality: this.props.compressionPercentage.value,
+    })
+    .then(uri => {
+      this.viewRef.current.addOverlay(this.overlay);
+      Image.getSize(uri, (width, height) => {
+        this.props.width.setValue(width.toString());
+        this.props.height.setValue(height.toString());
+        this.props.image.setValue(uri);
+        executeAction(this.props.onDetect);
+      }, error => {
+        console.error("Failed to get image size:", error);
+      });
+    })
+    .catch(error => {
+      console.error("Failed to capture view:", error);
+    });
   }
 
   componentWillUnmount() {
