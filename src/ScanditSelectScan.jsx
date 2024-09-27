@@ -14,7 +14,7 @@ import KeepAwake from 'react-native-keep-awake';
 import { requestCameraPermissionsIfNeeded } from './camera-permission-handler';
 
 const executeAction = action => {
-  if (action && action.canExecute && !action.isExecuting) {
+  if (action && action.canExecute) {
     action.execute();
   }
 }
