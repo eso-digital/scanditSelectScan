@@ -8,8 +8,8 @@ import {
   Symbology,
 } from 'scandit-react-native-datacapture-barcode';
 import { Camera, DataCaptureContext, DataCaptureView, FrameSourceState } from 'scandit-react-native-datacapture-core';
-import { ViewShot, captureScreen } from 'react-native-view-shot';
-import { KeepAwake } from 'react-native-keep-awake';
+import ViewShot, { captureScreen } from 'react-native-view-shot';
+import KeepAwake from 'react-native-keep-awake';
 
 import { requestCameraPermissionsIfNeeded } from './camera-permission-handler';
 
